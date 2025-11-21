@@ -170,7 +170,7 @@ set(JPEGXL_BUNDLE_LIBPNG ${BUNDLE_LIBPNG_DEFAULT} CACHE BOOL
     "Build libpng from source and link it statically.")
 set(JPEGXL_ENABLE_JNI true CACHE BOOL
     "Build JPEGXL JNI Java wrapper, if Java dependencies are installed.")
-set(JPEGXL_ENABLE_SJPEG true CACHE BOOL
+set(JPEGXL_ENABLE_SJPEG false CACHE BOOL # Disabled due to its incompatibility with changes made for TOML parsing
     "Build JPEGXL with support for encoding with sjpeg.")
 set(JPEGXL_ENABLE_OPENEXR true CACHE BOOL
     "Build JPEGXL with support for OpenEXR if available.")

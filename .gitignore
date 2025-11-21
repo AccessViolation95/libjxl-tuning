@@ -8,6 +8,7 @@
 
 # The downloaded corpora files for benchmark.
 /third_party/corpora
+/test-assets
 
 # hdrvdp source code
 third_party/hdrvdp-2.2.2
