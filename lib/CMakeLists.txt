@@ -118,7 +118,8 @@ else ()
   else()  # WIN32
     list(APPEND JPEGXL_INTERNAL_FLAGS
       -fsized-deallocation
-      -fno-exceptions
+      # -fno-exceptions # Disabled for TOML parsing library
+      -frtti # Enabled for TOML parsing library
 
       # Language flags
       -fmath-errno

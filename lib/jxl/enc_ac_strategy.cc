@@ -37,6 +37,9 @@
 #include "lib/jxl/enc_transforms-inl.h"
 #include "lib/jxl/simd_util.h"
 
+#include "third_party/toml/cpptoml.h"
+#define TUNING_CONFIG_TOML "../../cfg/enc_ac_strategy.toml"
+
 // Some of the floating point constants in this file and in other
 // files in the libjxl project have been obtained using the
 // tools/optimizer/simplex_fork.py tool. It is a variation of
@@ -52,7 +55,7 @@
 
 // Set JXL_DEBUG_AC_STRATEGY to 1 to enable debugging.
 #ifndef JXL_DEBUG_AC_STRATEGY
-#define JXL_DEBUG_AC_STRATEGY 0
+#define JXL_DEBUG_AC_STRATEGY 1
 #endif
 
 // This must come before the begin/end_target, but HWY_ONCE is only true
@@ -517,6 +520,9 @@ Status FindBest8x8Transform(size_t x, size_t y, int encoding_speed_tier,
                             float* block, float* scratch_space,
                             uint32_t* quantized, float* entropy_out,
                             AcStrategyType& best_tx) {
+
+  auto toml_config = cpptoml::parse_file(TUNING_CONFIG_TOML);
+                              
   struct TransformTry8x8 {
     AcStrategyType type;
     int encoding_speed_tier_max_limit;
@@ -525,53 +531,53 @@ Status FindBest8x8Transform(size_t x, size_t y, int encoding_speed_tier,
   static const TransformTry8x8 kTransforms8x8[] = {
       {
           AcStrategyType::DCT,
-          9,
-          0.8,
+          toml_config->get_qualified_as<int>("transform.8x8.dct.speed-tier-limit").value_or(9),
+          toml_config->get_qualified_as<double>("transform.8x8.dct.entropy-mul").value_or(0.8),
       },
       {
           AcStrategyType::DCT4X4,
-          5,
-          1.08,
+          toml_config->get_qualified_as<int>("transform.8x8.dct4x4.speed-tier-limit").value_or(5),
+          toml_config->get_qualified_as<double>("transform.8x8.dct4x4.entropy-mul").value_or(1.08),
       },
       {
           AcStrategyType::DCT2X2,
-          5,
-          0.95,
+          toml_config->get_qualified_as<int>("transform.8x8.dct2x2.speed-tier-limit").value_or(5),
+          toml_config->get_qualified_as<double>("transform.8x8.dct2x2.entropy-mul").value_or(0.95),
       },
       {
           AcStrategyType::DCT4X8,
-          4,
-          0.85931637428340035,
+          toml_config->get_qualified_as<int>("transform.8x8.dct4x8.speed-tier-limit").value_or(4),
+          toml_config->get_qualified_as<double>("transform.8x8.dct4x8.entropy-mul").value_or(0.85931637428340035),
       },
       {
           AcStrategyType::DCT8X4,
-          4,
-          0.85931637428340035,
+          toml_config->get_qualified_as<int>("transform.8x8.dct8x4.speed-tier-limit").value_or(4),
+          toml_config->get_qualified_as<double>("transform.8x8.dct8x4.entropy-mul").value_or(0.85931637428340035),
       },
       {
           AcStrategyType::IDENTITY,
-          5,
-          1.0427542510634957,
+          toml_config->get_qualified_as<int>("transform.8x8.identity.speed-tier-limit").value_or(5),
+          toml_config->get_qualified_as<double>("transform.8x8.identity.entropy-mul").value_or(1.0427542510634957),
       },
       {
           AcStrategyType::AFV0,
-          4,
-          0.81779489591359944,
+          toml_config->get_qualified_as<int>("transform.8x8.afv0.speed-tier-limit").value_or(4),
+          toml_config->get_qualified_as<double>("transform.8x8.afv0.entropy-mul").value_or(0.81779489591359944),
       },
       {
           AcStrategyType::AFV1,
-          4,
-          0.81779489591359944,
+          toml_config->get_qualified_as<int>("transform.8x8.afv1.speed-tier-limit").value_or(4),
+          toml_config->get_qualified_as<double>("transform.8x8.afv1.entropy-mul").value_or(0.81779489591359944),
       },
       {
           AcStrategyType::AFV2,
-          4,
-          0.81779489591359944,
+          toml_config->get_qualified_as<int>("transform.8x8.afv2.speed-tier-limit").value_or(4),
+          toml_config->get_qualified_as<double>("transform.8x8.afv2.entropy-mul").value_or(0.81779489591359944),
       },
       {
           AcStrategyType::AFV3,
-          4,
-          0.81779489591359944,
+          toml_config->get_qualified_as<int>("transform.8x8.afv3.speed-tier-limit").value_or(4),
+          toml_config->get_qualified_as<double>("transform.8x8.afv3.entropy-mul").value_or(0.81779489591359944),
       },
   };
   double best = 1e30;
@@ -889,12 +895,15 @@ Status ProcessRectACS(const CompressParams& cparams, const ACSConfig& config,
   // ringing next to sky etc. Optimization will find smaller numbers
   // and produce more ringing than is ideal. Larger numbers will
   // help stop ringing.
-  const float entropy_mul16X8 = 1.21;
-  const float entropy_mul16X16 = 1.34;
-  const float entropy_mul16X32 = 1.49;
-  const float entropy_mul32X32 = 1.48;
-  const float entropy_mul64X32 = 2.25;
-  const float entropy_mul64X64 = 2.25;
+  auto toml_config = cpptoml::parse_file(TUNING_CONFIG_TOML);
+  auto table = toml_config->get_table_qualified("merge-try.entropy-mul");
+
+  const float entropy_mul16X8 = table->get_as<double>("16x8").value_or(1.21);
+  const float entropy_mul16X16 = table->get_as<double>("16x16").value_or(1.34);
+  const float entropy_mul16X32 = table->get_as<double>("16x32").value_or(1.49);
+  const float entropy_mul32X32 = table->get_as<double>("32x32").value_or(1.48);
+  const float entropy_mul64X32 = table->get_as<double>("64x32").value_or(2.25);
+  const float entropy_mul64X64 = table->get_as<double>("64x64").value_or(2.25);
   // TODO(jyrki): Consider this feedback in further changes:
   // Also effectively when the multipliers for smaller blocks are
   // below 1, this raises the bar for the bigger blocks even higher
@@ -1071,6 +1080,9 @@ Status AcStrategyHeuristics::Init(const Image3F& src, const Rect& rect_in,
                                   const ImageF& quant_field, const ImageF& mask,
                                   const ImageF& mask1x1,
                                   DequantMatrices* matrices) {
+  auto toml_config = cpptoml::parse_file(TUNING_CONFIG_TOML); 
+  auto table = toml_config->get_table_qualified("strategy-heuristics");
+
   config.dequant = matrices;
 
   if (cparams.speed_tier >= SpeedTier::kCheetah) {
@@ -1108,16 +1120,17 @@ Status AcStrategyHeuristics::Init(const Image3F& src, const Rect& rect_in,
   //  - estimate of the number of bits that will be used by the block
   //  - information loss due to quantization
   // The following constant controls the relative weights of these components.
-  config.info_loss_multiplier = 1.2;
-  config.zeros_mul = 9.3089059022677905;
-  config.cost_delta = 10.833273317067883;
+  auto entropy_table = table->get_table("entropy");
+  config.info_loss_multiplier = entropy_table->get_as<double>("info-loss-multiplier").value_or(1.2);
+  config.zeros_mul =  entropy_table->get_as<double>("zeros-mul").value_or(9.3089059022677905);
+  config.cost_delta =   entropy_table->get_as<double>("cost-delta").value_or(10.833273317067883);
 
-  static const float kBias = 0.13731742964354549;
+  static const float kBias = entropy_table->get_as<double>("bias").value_or(0.13731742964354549);
   const float ratio = (cparams.butteraugli_distance + kBias) / (1.0f + kBias);
 
-  static const float kPow1 = 0.33677806662454718;
-  static const float kPow2 = 0.50990926717963703;
-  static const float kPow3 = 0.36702940662370243;
+  const float kPow1 = entropy_table->get_as<double>("pow-1").value_or(0.33677806662454718);
+  const float kPow2 = entropy_table->get_as<double>("pow-2").value_or(0.50990926717963703);
+  const float kPow3 = entropy_table->get_as<double>("pow-3").value_or(0.36702940662370243);
   config.info_loss_multiplier *= std::pow(ratio, kPow1);
   config.zeros_mul *= std::pow(ratio, kPow2);
   config.cost_delta *= std::pow(ratio, kPow3);
