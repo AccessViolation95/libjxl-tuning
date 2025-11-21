@@ -1,0 +1,53 @@
+# Original values from commit 9174e635cd5980e96fcf50d37873cf40045ce2df
+
+[transform.8x8]
+dct.speed-tier-limit = 9
+dct.entropy-mul = 0.8
+
+dct4x4.speed-tier-limit = 5
+dct4x4.entropy-mul = 1.08
+
+dct2x2.speed-tier-limit = 5
+dct2x2.entropy-mul = 0.95
+
+dct4x8.speed-tier-limit = 4
+dct4x8.entropy-mul = 0.85931637428340035
+
+dct8x4.speed-tier-limit = 4
+dct8x4.entropy-mul = 0.85931637428340035
+
+identity.speed-tier-limit = 5
+identity.entropy-mul = 1.0427542510634957
+
+afv0.speed-tier-limit = 4
+afv0.entropy-mul = 0.81779489591359944
+
+afv1.speed-tier-limit = 4
+afv1.entropy-mul = 0.81779489591359944
+
+afv2.speed-tier-limit = 4
+afv2.entropy-mul = 0.81779489591359944
+
+afv3.speed-tier-limit = 4
+afv3.entropy-mul = 0.81779489591359944
+
+
+[merge-try.entropy-mul]
+16x8 = 1.21
+16x16 = 1.34
+16x32 = 1.49
+32x32 = 1.48
+64x32 = 2.25
+64x64 = 2.25
+
+
+[strategy-heuristics.entropy]
+info-loss-multiplier = 1.2
+zeros-mul = 9.3089059022677905
+cost-delta = 10.833273317067883
+
+bias = 0.13731742964354549
+
+pow-1 = 0.33677806662454718
+pow-2 = 0.50990926717963703
+pow-3 = 0.36702940662370243
